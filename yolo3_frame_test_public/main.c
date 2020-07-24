@@ -279,7 +279,7 @@ int main(void) {
     detect_rl0.anchor= layer0_anchor;
     detect_rl0.threshold= 0.6;
     detect_rl0.nms_value= 0.3;
-    region_layer_init(&detect_rl0, 10, 7, 75, 320, 224);
+    region_layer_init(&detect_rl0, 10, 7, 75, 320, 224); //int width, int height, int channels, int origin_width, int origin_height
 
     detect_rl1.anchor_number= ANCHOR_NUM;
     detect_rl1.anchor= layer1_anchor;
@@ -291,6 +291,12 @@ int main(void) {
     sysctl_enable_irq();
     /* system start */
     printf("System start\n");
+
+    /* display result */
+    // lcd_draw_picture(0, 0, 320, 224, (uint32_t *)display_image.addr);
+    rgb888_to_lcd(ai_image, lcd_gram, 320, 224);
+    lcd_draw_picture(0, 0, 320, 224, lcd_gram);
+    printf("display image\n");
     // while (1)
     {
         // g_dvp_finish_flag= 0;
@@ -302,6 +308,7 @@ int main(void) {
         g_ai_done_flag= 0;
         kpu_run_kmodel(&face_detect_task, ai_image, DMAC_CHANNEL5, ai_done, NULL);
         while (!g_ai_done_flag) {};
+        printf("ai_done_flag: true\n");
 
         float *output0, *output1;
         size_t output_size0, output_size1;
@@ -315,10 +322,6 @@ int main(void) {
         detect_rl1.input= output1;
         region_layer_run(&detect_rl1, NULL);
 
-        /* display result */
-        // lcd_draw_picture(0, 0, 320, 224, (uint32_t *)display_image.addr);
-        rgb888_to_lcd(ai_image, lcd_gram, 320, 224);
-        lcd_draw_picture(0, 0, 320, 224, lcd_gram);
         /* run key point detect */
         region_layer_draw_boxes(&detect_rl0, drawboxes);
         region_layer_draw_boxes(&detect_rl1, drawboxes);
